@@ -1,8 +1,7 @@
 const mongoose = require("mongoose");
 require("dotenv").config();
 
-// mongoose.connect(`${process.env.DB_URL}/${process.env.DB_NAME}`);
-mongoose.connect("mongodb+srv://yash:Yash123@cluster0.jia8s2u.mongodb.net/friend_sphere?retryWrites=true&w=majority&appName=Cluster0");
+mongoose.connect(`${process.env.DB_URL}`, { useNewUrlParser: true, useUnifiedTopology: true });
 
 const userSchema = mongoose.Schema({
   fname: {
