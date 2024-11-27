@@ -53,7 +53,12 @@ app.post("/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt); // Hash the password
     user = await userModel.create({ fname, lname, username, password: hashedPassword, email });
     const token = jwt.sign({ email, userId: user._id }, process.env.ENCRYPT_STRING);
-    res.cookie("token", token, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true, secure: true});
+    res.cookie("token", token, { 
+      maxAge: 24 * 60 * 60 * 1000, 
+      httpOnly: true, 
+      secure: true, 
+      sameSite: "None" // Use "None" for cross-origin, otherwise "Lax" or "Strict" 
+    });
 
     console.log(user);
     return res.json(user);
@@ -76,7 +81,12 @@ app.post("/login", async (req, res) => {
       }
       if(result){
         const token = jwt.sign({email: user.email, userId: user._id}, process.env.ENCRYPT_STRING);
-        res.cookie("token", token, {maxAge: 24 * 60 * 60 * 1000, httpOnly: true, secure: true});
+        res.cookie("token", token, {
+          maxAge: 24 * 60 * 60 * 1000, 
+          httpOnly: true, 
+          secure: true,
+          sameSite: "None" // Use "None" for cross-origin, otherwise "Lax" or "Strict"
+        });
         return res.send(true);
       }
       else{
