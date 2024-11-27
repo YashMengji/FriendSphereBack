@@ -5,8 +5,22 @@ const crypto = require("crypto");
 const bcrypt = require("bcrypt"); //For encryption of passwords
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser")
+const cors = require('cors');
 
 const app = express();
+
+// DEPLOYMENT ONLY 
+const whitelist = ['https://friendspherefrontstatic.onrender.com']; // Whitelist the specific URL
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (whitelist.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+};
+app.use(cors(corsOptions)); // Use the CORS middleware with the specified options
 
 app.use(express.json()); 
 app.use(express.urlencoded({extended: true})); 
