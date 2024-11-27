@@ -18,7 +18,8 @@ const corsOptions = {
     } else {
       callback(new Error('Not allowed by CORS'));
     }
-  }
+  },
+  credentials: true // Ensure cookies are allowed to be sent in cross-origin requests
 };
 app.use(cors(corsOptions)); // Use the CORS middleware with the specified options
 
