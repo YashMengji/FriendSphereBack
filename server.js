@@ -68,36 +68,69 @@ app.post("/register", async (req, res) => {
   }
 });
 
+// app.post("/login", async (req, res) => {
+//   try{
+//     const {username, password} = req.body;
+//     const user = await userModel.findOne({username});
+//     if(user == null){
+//       return res.status(400).json({ message: "User not registerd" });
+//     }
+//     bcrypt.compare(password, user.password, function(err, result) {
+//       if (err) {
+//         return res.status(500).json({ message: "Error comparing passwords" });
+//       }
+//       if(result){
+//         const token = jwt.sign({email: user.email, userId: user._id}, process.env.ENCRYPT_STRING);
+//         res.cookie("token", token, {
+//           maxAge: 24 * 60 * 60 * 1000, 
+//           httpOnly: true, 
+//           secure: true,
+//           sameSite: "None" // Use "None" for cross-origin, otherwise "Lax" or "Strict"
+//         });
+//         return res.send(true);
+//       }
+//       else{
+//         return res.status(400).json({ message: "Password is incorrect" });
+//       }
+//     });
+//   }
+//   catch(error) {
+//     return res.status(400).send(error.message);
+//   }
+// });
 app.post("/login", async (req, res) => {
-  try{
-    const {username, password} = req.body;
-    const user = await userModel.findOne({username});
-    if(user == null){
-      return res.status(400).json({ message: "User not registerd" });
-    }
-    bcrypt.compare(password, user.password, function(err, result) {
-      if (err) {
-        return res.status(500).json({ message: "Error comparing passwords" });
-      }
-      if(result){
-        const token = jwt.sign({email: user.email, userId: user._id}, process.env.ENCRYPT_STRING);
+  try {
+    console.log("Login Attempt:", req.body);
+    const { username, password } = req.body;
+    const user = await userModel.findOne({ username });
+    console.log("User Found:", user);
+    if (!user) return res.status(400).json({ message: "User not registered" });
+
+    bcrypt.compare(password, user.password, function (err, result) {
+      if (err) console.error("Bcrypt Error:", err);
+      console.log("Password Match:", result);
+      if (result) {
+        const token = jwt.sign(
+          { email: user.email, userId: user._id },
+          process.env.ENCRYPT_STRING
+        );
         res.cookie("token", token, {
-          maxAge: 24 * 60 * 60 * 1000, 
-          httpOnly: true, 
+          maxAge: 24 * 60 * 60 * 1000,
+          httpOnly: true,
           secure: true,
-          sameSite: "None" // Use "None" for cross-origin, otherwise "Lax" or "Strict"
+          sameSite: "None",
         });
-        return res.send(true);
-      }
-      else{
+        return res.send(user);
+      } else {
         return res.status(400).json({ message: "Password is incorrect" });
       }
     });
-  }
-  catch(error) {
+  } catch (error) {
+    console.error("Login Error:", error.message);
     return res.status(400).send(error.message);
   }
 });
+
 
 app.get("/users", async (req, res) => {
   try {
@@ -203,6 +236,19 @@ app.post("/unFriend", isLoggedIn, async (req, res) => {
     return res.status(400).send(error.message);
   }
 })
+
+// DEPLOYMENT ONLY
+app.use((req, res, next) => {
+  console.log("Incoming Request:");
+  console.log("Headers:", req.headers);
+  console.log("Cookies:", req.cookies);
+  console.log("Body:", req.body);
+  next();
+});
+app.use((err, req, res, next) => {
+  console.error("Unhandled Error:", err.stack);
+  res.status(500).send("Something went wrong!");
+});
 
 
 app.listen(process.env.PORT || 3000, () => {
