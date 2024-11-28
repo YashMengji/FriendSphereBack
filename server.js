@@ -8,9 +8,8 @@ const cookieParser = require("cookie-parser")
 const cors = require('cors');
 
 const app = express();
-
 // DEPLOYMENT ONLY 
-const whitelist = ['https://friendspherefrontstatic.onrender.com']; // Whitelist the specific URL
+const whitelist = ["https://friendspherefrontstatic.onrender.com", "https://friendspherefront.onrender.com/"]
 const corsOptions = {
   origin: function (origin, callback) {
     if (whitelist.indexOf(origin) !== -1 || !origin) {
