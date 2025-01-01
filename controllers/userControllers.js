@@ -15,6 +15,12 @@ async function sendRequest (req, res) {
     const senderId = req.signData.userId;
 
     const sender = await userModel.findById(senderId);
+    if(sender.friendRequestsSent.includes(receiverId)) {
+      return res.status(400).json({ message: "Request already sent" });
+    }
+    if(sender.friends.includes(receiverId)) {
+      return res.status(400).json({ message: "You are already friend with this user" });
+    }
     sender.friendRequestsSent.push(receiverId);
     await sender.save(); 
 
@@ -28,6 +34,7 @@ async function sendRequest (req, res) {
   }
 }
 
+
 async function acceptRequest (req, res) {
   try {
     const { senderId } = req.body;
@@ -35,6 +42,13 @@ async function acceptRequest (req, res) {
 
     const receiver = await userModel.findById(receiverId);
     const sender = await userModel.findById(senderId);
+
+    if(receiver.friends.includes(senderId)) {
+      return res.status(400).json({ message: "You are already friend with this user" });
+    }
+    if(!receiver.friendRequestsReceived.includes(senderId)) {
+      return res.status(400).json({ message: "No request found" });
+    }
 
     receiver.friends.push(senderId);
     receiver.friendRequestsReceived = receiver.friendRequestsReceived.filter(id => id != senderId);
@@ -90,4 +104,25 @@ async function unFriend (req, res) {
   }
 }
 
-module.exports = { getUsers, sendRequest, acceptRequest, rejectRequest, unFriend };
+async function removeRequest(req, res) {
+  try {
+    const { receiverId } = req.body;
+    const senderId = req.signData.userId;
+
+    const sender = await userModel.findById(senderId);
+    const receiver = await userModel.findById(receiverId);
+    
+    sender.friendRequestsSent = sender.friendRequestsSent.filter(id => id != receiverId);
+    await sender.save();
+
+    receiver.friendRequestsReceived = receiver.friendRequestsReceived.filter(id => id != senderId);
+    await receiver.save();
+
+    res.send(true);
+  }
+  catch (error) {
+    return res.status(400).send(error.message);
+  }
+}
+
+module.exports = { getUsers, sendRequest, acceptRequest, rejectRequest, unFriend, removeRequest };
