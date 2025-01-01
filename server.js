@@ -13,7 +13,7 @@ app.use(express.urlencoded({extended: true}));
 app.use(cookieParser());
   
 app.get("/", (req, res) => {
-  res.send("Home page");
+  res.redirect("https://friendspherefront.onrender.com");
 })
 
 app.post("/register", async (req, res) => {
