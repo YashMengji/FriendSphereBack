@@ -1,6 +1,5 @@
 const userModel = require('../models/users');
 
-
 async function getUsers (req, res) { // API to get all users
   try {
     const users = await userModel.find().sort({ createdAt: -1 });
