@@ -24,6 +24,14 @@ const userSchema = mongoose.Schema({
     type: String, 
     required: true 
   }, // Store hashed password
+  comments: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "comment"
+  }],
+  likes: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "like"
+  }],
   friends: [{ 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User' 
@@ -42,5 +50,23 @@ const userSchema = mongoose.Schema({
     default: Date.now 
   },
 })
+
+userSchema.pre("remove", async function(next) {
+  try {
+    await this.model("comment").deleteMany({userId: this._id});
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+userSchema.pre("remove", async function(next) {
+  try {
+    await this.model("like").deleteMany({userId: this._id});
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = mongoose.model("User", userSchema);
