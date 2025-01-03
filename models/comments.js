@@ -18,7 +18,7 @@ const commentSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "post"
   },
-  parentId: {
+  parentId: { 
     type: mongoose.Schema.Types.ObjectId,
     ref: "comment"
   },

@@ -5,7 +5,7 @@ const mongoose = require("mongoose");
 
 const COMMENT_SELECT_FIELDS = {
   path: "comments",
-  select: "_id message parentId createdAt userId",
+  select: "_id message parentId createdAt userId postId",
   options: {
     sort: { createdAt: -1 }
   },
@@ -47,10 +47,15 @@ async function createComment (req, res) {
     if(req.body.message === "" || req.body.message == null){
       return res.status(400).json({ message: "Message is required" })
     } 
+    let user = await userModel.findOne({_id: "66ea9b5ed0e6480aeb3607b6"}); //Take later from cookie
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
     const commentData = {
       message: req.body.message,
-      userId: new mongoose.Types.ObjectId("66db4ebebd2dcd940dedd973"),
-      postId: new mongoose.Types.ObjectId(req.params.id)
+      userId: new mongoose.Types.ObjectId("66ea9b5ed0e6480aeb3607b6"),
+      postId: new mongoose.Types.ObjectId(`${req.params.id}`)
     };
     if (req.body.parentId) {
       commentData.parentId = req.body.parentId;
@@ -63,16 +68,6 @@ async function createComment (req, res) {
       await parentComment.save();
     }
   
-    const commentPopulate = await commentModel.findOne({_id: comment._id})
-    .select("_id message parentId createdAt userId")
-    .populate(
-      {
-        path: "userId",
-        select: "_id name"
-      }
-    )
-  
-  
     let post = await postModel.findOne({_id: req.params.id});
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
@@ -80,13 +75,17 @@ async function createComment (req, res) {
     post.comments.push(comment._id)
     await post.save()
   
-    let user = await userModel.findOne({_id: "66db4ebebd2dcd940dedd973"}); //Take later from cookie
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
     user.comments.push(comment._id);
     await user.save();
-    console.log(commentPopulate);
+
+    const commentPopulate = await commentModel.findOne({_id: comment._id})
+    .select("_id message parentId createdAt userId postId")
+    .populate(
+      {
+        path: "userId",
+        select: "_id fname"
+      }
+    )
   
     return res.json(commentPopulate);
   } catch (error) {
