@@ -34,15 +34,15 @@ const userSchema = mongoose.Schema({
   }],
   friends: [{ 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User' 
+    ref: 'user' 
   }], // List of friends (references to other users)
   friendRequestsSent: [{ 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User' 
+    ref: 'user' 
   }], // List of users to whom friend requests have been sent
   friendRequestsReceived: [{ 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User' 
+    ref: 'user' 
   }], // List of users who sent friend requests
   interests: [String], //  List of interests 
   createdAt: { 
@@ -69,4 +69,4 @@ userSchema.pre("remove", async function(next) {
   }
 });
 
-module.exports = mongoose.model("User", userSchema);
+module.exports = mongoose.model("user", userSchema);

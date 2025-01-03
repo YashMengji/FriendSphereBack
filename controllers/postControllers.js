@@ -1,11 +1,31 @@
 const postModel = require('../models/posts.js');
+const commentModel = require('../models/comments.js');
+const userModel = require('../models/users.js');
+const mongoose = require("mongoose");
+
+const COMMENT_SELECT_FIELDS = {
+  path: "comments",
+  select: "_id message parentId createdAt userId",
+  options: {
+    sort: { createdAt: -1 }
+  },
+  populate: {
+    path: "userId",
+    select: "_id username"
+  }
+}
 
 async function getAllPosts (req, res) {
   try {
-    const posts = await postModel.find();
+    const posts = await postModel.find()
+    .select("title body")
+    .populate(
+      COMMENT_SELECT_FIELDS
+    )
+    .sort({ createdAt: -1 });
     return res.status(200).json(posts);
   } catch (error) {
-    res.status(500).json({message: error.message});
+    res.status(500).json({message: "FROM HERE " + error.stack});
   }
 }
 
@@ -18,7 +38,7 @@ async function getSinglePost (req, res)  {
     );
     return res.json(post);
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({message: error.stack});
   }
 }
 
@@ -55,14 +75,14 @@ async function createComment (req, res) {
   
     let post = await postModel.findOne({_id: req.params.id});
     if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
+      return res.status(404).json({ message: 'Post not found' });
     }
     post.comments.push(comment._id)
     await post.save()
   
     let user = await userModel.findOne({_id: "66db4ebebd2dcd940dedd973"}); //Take later from cookie
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ message: 'User not found' });
     }
     user.comments.push(comment._id);
     await user.save();
@@ -70,7 +90,7 @@ async function createComment (req, res) {
   
     return res.json(commentPopulate);
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ message: error.stack });
   } 
 }
 
@@ -94,7 +114,7 @@ async function updateComment (req, res)  {
     )
     return res.json(commentPopulate);
   } catch (error) {
-    return res.status(400).json({ message: `Error from backend:- ${error}` })
+    return res.status(400).json({ message: `Error from backend:- ${error.stack}` })
   }
 }
 
@@ -115,7 +135,7 @@ async function deleteComment (req, res) {
 
     return res.status(200).json({ message: "Comment deleted successfully", _id: comment._id });
   } catch (error) {
-    return res.status(500).json({ message: error.stack, });
+    return res.status(500).json({ message: error.stack });
   }
 }
 
