@@ -46,8 +46,10 @@ async function createPost (req, res) {
       title: req.body.title,
       body: req.body.content,
       userId: new mongoose.Types.ObjectId("66ea9b5ed0e6480aeb3607b6"),
-      image: req.file.path
     };
+    if(req.file?.path !== "" && req.file?.path != null){
+      postData.image = req.file.path
+    }
     const post = await postModel.create(postData);
     user.posts.push(post._id);
     await user.save();
