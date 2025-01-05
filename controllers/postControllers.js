@@ -2,6 +2,7 @@ const postModel = require('../models/posts.js');
 const commentModel = require('../models/comments.js');
 const userModel = require('../models/users.js');
 const mongoose = require("mongoose");
+const storage = require("../config/cloudinary.js")
 
 const COMMENT_SELECT_FIELDS = {
   path: "comments",
@@ -18,7 +19,7 @@ const COMMENT_SELECT_FIELDS = {
 async function getAllPosts (req, res) {
   try {
     const posts = await postModel.find()
-    .select("title body")
+    .select("title body image createdAt")
     .populate(
       COMMENT_SELECT_FIELDS
     )
@@ -26,6 +27,33 @@ async function getAllPosts (req, res) {
     return res.status(200).json(posts);
   } catch (error) {
     res.status(500).json({message: "FROM HERE " + error.stack});
+  }
+}
+
+async function createPost (req, res) {
+  try {
+    if(req.body.title === "" || req.body.title == null){
+      return res.status(400).json({ message: "Title is required" })
+    } 
+    if(req.body.content === "" || req.body.content == null){
+      return res.status(400).json({ message: "Body is required" })
+    } 
+    let user = await userModel.findOne({_id: "66ea9b5ed0e6480aeb3607b6"}); //Take later from cookie
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const postData = {
+      title: req.body.title,
+      body: req.body.content,
+      userId: new mongoose.Types.ObjectId("66ea9b5ed0e6480aeb3607b6"),
+      image: req.file.path
+    };
+    const post = await postModel.create(postData);
+    user.posts.push(post._id);
+    await user.save();
+    return res.status(201).json(post);
+  } catch (error) {
+    return res.status(500).json({ message: error.stack });
   }
 }
 
@@ -138,4 +166,5 @@ async function deleteComment (req, res) {
   }
 }
 
-module.exports = { getAllPosts, getSinglePost, createComment, updateComment, deleteComment };
+
+module.exports = { getAllPosts, getSinglePost, createComment, updateComment, deleteComment, createPost };

@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { use } = require("../routes/authRoutes");
 require("dotenv").config();
 
 const postSchema = mongoose.Schema({
@@ -10,12 +11,24 @@ const postSchema = mongoose.Schema({
     type: String, 
     required: true 
   },
+  image:{
+    type: String
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user",
+    required: true
+  },
   comments: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "comment"
     }
-  ]
+  ],
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
 });
 
 // Middleware to handle cascade delete (Here first parameter of mongoose.model() is considered in this.model())

@@ -32,6 +32,10 @@ const userSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "like"
   }],
+  posts: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "post"
+  }],
   friends: [{ 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'user' 
