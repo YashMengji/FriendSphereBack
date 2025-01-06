@@ -1,5 +1,6 @@
 const cloudinary = require("cloudinary").v2;
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const multer = require("multer"); // Middleware for handling file uploads
 require("dotenv").config();
 
 // Configure Cloudinary
@@ -18,4 +19,6 @@ const storage = new CloudinaryStorage({
   },
 });
 
-module.exports =  storage ;
+const upload = multer({ storage: storage });
+
+module.exports =  upload;

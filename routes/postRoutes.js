@@ -1,11 +1,8 @@
 const express = require("express");
-const multer = require("multer"); // Middleware for handling file uploads
-const storage = require("../config/cloudinary.js");
+const upload = require("../config/cloudinary");
 const { getAllPosts, getSinglePost, createComment, updateComment, deleteComment, createPost } = require("../controllers/postControllers");
 
 const router = express.Router();
-
-const upload = multer({ storage: storage });
 
 router.get("/", getAllPosts);
 router.post("/", upload.single("image"), createPost); 

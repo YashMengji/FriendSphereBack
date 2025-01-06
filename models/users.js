@@ -24,6 +24,10 @@ const userSchema = mongoose.Schema({
     type: String, 
     required: true 
   }, // Store hashed password
+  image: { 
+    type: String,
+    default: "https://res.cloudinary.com/du5jkj6pi/image/upload/v1736188016/FriendSphere/jp3evvshq3hdgmvfacid.png"
+  }, // URL to user's profile
   comments: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "comment"
