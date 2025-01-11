@@ -38,14 +38,14 @@ async function createPost (req, res) {
     if(req.body.content === "" || req.body.content == null){
       return res.status(400).json({ message: "Body is required" })
     } 
-    let user = await userModel.findOne({_id: "66ea9b5ed0e6480aeb3607b6"}); //Take later from cookie
+    let user = await userModel.findOne({_id: req.signData.userId}); //Take later from cookie
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
     const postData = {
       title: req.body.title,
       body: req.body.content,
-      userId: new mongoose.Types.ObjectId("66ea9b5ed0e6480aeb3607b6"),
+      userId: new mongoose.Types.ObjectId(`${req.signData.userId}`),
     };
     if(req.file?.path !== "" && req.file?.path != null){
       postData.image = req.file.path
@@ -77,14 +77,14 @@ async function createComment (req, res) {
     if(req.body.message === "" || req.body.message == null){
       return res.status(400).json({ message: "Message is required" })
     } 
-    let user = await userModel.findOne({_id: "66ea9b5ed0e6480aeb3607b6"}); //Take later from cookie
+    let user = await userModel.findOne({_id: req.signData.userId}); //Take later from cookie
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
     
     const commentData = {
       message: req.body.message,
-      userId: new mongoose.Types.ObjectId("66ea9b5ed0e6480aeb3607b6"),
+      userId: new mongoose.Types.ObjectId(`${req.signData.userId}`),
       postId: new mongoose.Types.ObjectId(`${req.params.id}`)
     };
     if (req.body.parentId) {

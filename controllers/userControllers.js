@@ -145,8 +145,11 @@ async function editUser(req, res) {
     if(req.body.username !== "" || req.body.username != null){
       userData.username = req.body.username
     }
-    const user = await userModel.updateOne({ _id: "66ea9b5ed0e6480aeb3607b6" }, userData);
-    return res.status(201).json(user);
+    console.log(userData)
+    const user = await userModel.updateOne({ _id: req.signData.userId}, userData);
+    const updatedUser = await userModel.findById(req.signData.userId);
+    console.log(updatedUser)
+    return res.status(201).json(updatedUser);
   } catch (error) {
     return res.status(500).json({ message: "Edit user " + error.stack })
   }
