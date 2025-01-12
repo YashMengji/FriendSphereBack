@@ -145,10 +145,10 @@ async function editUser(req, res) {
     if(req.body.username !== "" || req.body.username != null){
       userData.username = req.body.username
     }
-    console.log(userData)
+    // console.log(userData)
     const user = await userModel.updateOne({ _id: req.signData.userId}, userData);
     const updatedUser = await userModel.findById(req.signData.userId);
-    console.log(updatedUser)
+    // console.log(updatedUser)
     return res.status(201).json(updatedUser);
   } catch (error) {
     return res.status(500).json({ message: "Edit user " + error.stack })
@@ -156,3 +156,4 @@ async function editUser(req, res) {
 }
 
 module.exports = { getUsers, sendRequest, acceptRequest, rejectRequest, unFriend, removeRequest, editUser };
+

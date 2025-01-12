@@ -20,8 +20,9 @@ async function getAllPosts (req, res) {
   try {
     const posts = await postModel.find()
     .select("title body image createdAt")
+    .populate("userId", "username image") // Populate user details
     .populate(
-      COMMENT_SELECT_FIELDS
+      COMMENT_SELECT_FIELDS  // Populate user details within comments
     )
     .sort({ createdAt: -1 });
     return res.status(200).json(posts);

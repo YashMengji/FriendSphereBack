@@ -27,7 +27,7 @@ async function register (req, res) {
     const token = jwt.sign({ email, userId: user._id }, process.env.ENCRYPT_STRING);
     res.cookie("token", token, { maxAge: 24 * 60 * 60 * 1000 });
 
-    console.log(user);
+    // console.log(user);
     return res.json(user);
   } catch (error) {
     console.log(error.message);

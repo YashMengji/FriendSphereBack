@@ -25,7 +25,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/u", userRoutes);
-app.use("/api/posts/", postRoutes);
+app.use("/api/posts", postRoutes);
 
 app.use(errorHandler);
 
