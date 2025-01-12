@@ -52,9 +52,10 @@ async function createPost (req, res) {
       postData.image = req.file.path
     }
     const post = await postModel.create(postData);
+    const populatedPost = await postModel.findById(post._id).populate('userId', 'username image');
     user.posts.push(post._id);
     await user.save();
-    return res.status(201).json(post);
+    return res.status(201).json(populatedPost);
   } catch (error) {
     return res.status(500).json({ message: error.stack });
   }
@@ -114,7 +115,7 @@ async function createComment (req, res) {
     .populate(
       {
         path: "userId",
-        select: "_id fname"
+        select: "username image"
       }
     )
   
@@ -169,5 +170,29 @@ async function deleteComment (req, res) {
   }
 }
 
+async function deleteAll (req, res) {
+  try {
+    await postModel.deleteMany();
+    await commentModel.deleteMany();
+    return res.status(200).json({ message: "All posts and comments deleted successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: error.stack });
+  }
+}
 
-module.exports = { getAllPosts, getSinglePost, createComment, updateComment, deleteComment, createPost };
+async function deleteSinglePost (req, res) {
+  try {
+    const post = await postModel.findByIdAndDelete(req.params.postId);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    await commentModel.deleteMany({ postId: post._id });
+    await userModel.updateOne({ _id: post.userId }, { $pull: { posts: post._id } });
+    return res.status(200).json({ message: "Post deleted successfully", _id: post._id });
+  } catch (error) {
+    return res.status(500).json({ message: error.stack });
+  }
+}
+
+
+module.exports = { getAllPosts, getSinglePost, createComment, updateComment, deleteComment, createPost, deleteAll, deleteSinglePost };

@@ -5,7 +5,7 @@ async function getUsers(req, res) { // API to get all users
     const users = await userModel.find().sort({ createdAt: -1 });
     return res.json(users);
   } catch (error) {
-    return res.status(400).send(error.message);
+    return res.status(400).send({message: error.message});
   }
 }
 
@@ -15,16 +15,20 @@ async function sendRequest(req, res) {
     const senderId = req.signData.userId;
 
     const sender = await userModel.findById(senderId);
+    const receiver = await userModel.findById(receiverId);
+
     if (sender.friendRequestsSent.includes(receiverId)) {
       return res.status(400).json({ message: "Request already sent" });
     }
     if (sender.friends.includes(receiverId)) {
       return res.status(400).json({ message: "You are already friend with this user" });
     }
+    if(sender.friendRequestsReceived.includes(receiverId)){
+      return res.status(400).json({ message: "You have incoming request from this user" });
+    }
     sender.friendRequestsSent.push(receiverId);
     await sender.save();
 
-    const receiver = await userModel.findById(receiverId);
     receiver.friendRequestsReceived.push(senderId);
     await receiver.save();
 
@@ -79,7 +83,7 @@ async function rejectRequest(req, res) {
 
     res.send(true);
   } catch (error) {
-    return res.status(400).send(error.message);
+    return res.status(400).send({message: error.message});
   }
 }
 
