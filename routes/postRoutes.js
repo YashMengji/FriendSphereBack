@@ -5,13 +5,13 @@ const { getAllPosts, getSinglePost, createComment, updateComment, deleteComment,
 
 const router = express.Router();
 
-router.get("/", getAllPosts);
+router.get("/", isLoggedIn, getAllPosts);
 router.post("/", isLoggedIn, upload.single("image"), createPost); 
-router.get("/:id", getSinglePost);
+// router.get("/:id", isLoggedIn, getSinglePost);
 router.post("/:id/comments", isLoggedIn, createComment);
-router.put("/:postId/comments/:commentId", updateComment);
-router.delete("/:postId/comments/:commentId", deleteComment);
-router.delete("/:postId", deleteSinglePost);
-// router.get("/deleteAll", deleteAll)
+router.put("/:postId/comments/:commentId", isLoggedIn, updateComment);
+router.delete("/:postId/comments/:commentId", isLoggedIn, deleteComment);
+router.delete("/:postId", isLoggedIn, deleteSinglePost);
+router.get("/deleteAll", deleteAll)
 
 module.exports = router;

@@ -25,7 +25,7 @@ const commentSchema = mongoose.Schema({
   comments: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "comment"
-  }]
+  }],
 });
 
 // Middleware to handle cascade delete (Here first parameter of mongoose.model() is considered in this.model())

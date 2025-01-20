@@ -1,6 +1,7 @@
 const postModel = require('../models/posts.js');
 const commentModel = require('../models/comments.js');
 const userModel = require('../models/users.js');
+const likeModel = require('../models/likes.js');
 const mongoose = require("mongoose");
 const storage = require("../config/cloudinary.js")
 
@@ -16,30 +17,47 @@ const COMMENT_SELECT_FIELDS = {
   }
 }
 
-async function getAllPosts (req, res) {
+async function getAllPosts(req, res) {
   try {
-    const posts = await postModel.find()
-    .select("title body image createdAt")
-    .populate("userId", "username image") // Populate user details
-    .populate(
-      COMMENT_SELECT_FIELDS  // Populate user details within comments
-    )
-    .sort({ createdAt: -1 });
+    let posts = await postModel.find()
+      .select("title body image createdAt")
+      .populate("userId", "username image") // Populate user details
+      .populate(
+        COMMENT_SELECT_FIELDS  // Populate user details within comments
+      )
+      .sort({ createdAt: -1 });
+
+    const likesByMe = await likeModel.find({
+      userId: req.signData.userId,
+      commentId: { $in: posts.map(post => post.comments.map(comment => comment._id)).flat() }
+    })
+
+    posts = await Promise.all(posts.map(async (post) => {
+      const comments = await Promise.all(post.comments.map(async (comment) => {
+        return {
+          ...comment,
+          likedByMe: likesByMe.find(like => like.commentId == comment._id),
+          likeCount: await likeModel.countDocuments({ commentId: comment._id })
+        };
+      }));
+      return { ...post, comments };
+    }));
+
     return res.status(200).json(posts);
   } catch (error) {
-    res.status(500).json({message: "FROM HERE " + error.stack});
+    res.status(500).json({ message: "FROM HERE " + error.stack });
   }
 }
 
-async function createPost (req, res) {
+async function createPost(req, res) {
   try {
-    if(req.body.title === "" || req.body.title == null){
+    if (req.body.title === "" || req.body.title == null) {
       return res.status(400).json({ message: "Title is required" })
-    } 
-    if(req.body.content === "" || req.body.content == null){
+    }
+    if (req.body.content === "" || req.body.content == null) {
       return res.status(400).json({ message: "Body is required" })
-    } 
-    let user = await userModel.findOne({_id: req.signData.userId}); //Take later from cookie
+    }
+    let user = await userModel.findOne({ _id: req.signData.userId }); //Take later from cookie
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -48,7 +66,7 @@ async function createPost (req, res) {
       body: req.body.content,
       userId: new mongoose.Types.ObjectId(`${req.signData.userId}`),
     };
-    if(req.file?.path !== "" && req.file?.path != null){
+    if (req.file?.path !== "" && req.file?.path != null) {
       postData.image = req.file.path
     }
     const post = await postModel.create(postData);
@@ -61,29 +79,29 @@ async function createPost (req, res) {
   }
 }
 
-async function getSinglePost (req, res)  {
+async function getSinglePost(req, res) {
   try {
     const post = await postModel.findOne({ _id: req.params.id })
-    .select("title body")
-    .populate(
-      COMMENT_SELECT_FIELDS
-    );
+      .select("title body")
+      .populate(
+        COMMENT_SELECT_FIELDS
+      );
     return res.json(post);
   } catch (error) {
-    res.status(500).json({message: error.stack});
+    res.status(500).json({ message: error.stack });
   }
 }
 
-async function createComment (req, res) {
+async function createComment(req, res) {
   try {
-    if(req.body.message === "" || req.body.message == null){
+    if (req.body.message === "" || req.body.message == null) {
       return res.status(400).json({ message: "Message is required" })
-    } 
-    let user = await userModel.findOne({_id: req.signData.userId}); //Take later from cookie
+    }
+    let user = await userModel.findOne({ _id: req.signData.userId }); //Take later from cookie
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    
+
     const commentData = {
       message: req.body.message,
       userId: new mongoose.Types.ObjectId(`${req.signData.userId}`),
@@ -93,63 +111,67 @@ async function createComment (req, res) {
       commentData.parentId = req.body.parentId;
     }
     const comment = await commentModel.create(commentData);
-    
+
     if (req.body.parentId) {
-      const parentComment = await commentModel.findOne({_id: req.body.parentId})
+      const parentComment = await commentModel.findOne({ _id: req.body.parentId })
       parentComment.comments.push(comment._id)
       await parentComment.save();
     }
-  
-    let post = await postModel.findOne({_id: req.params.id});
+
+    let post = await postModel.findOne({ _id: req.params.id });
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
     post.comments.push(comment._id)
     await post.save()
-  
+
     user.comments.push(comment._id);
     await user.save();
 
-    const commentPopulate = await commentModel.findOne({_id: comment._id})
-    .select("_id message parentId createdAt userId postId")
-    .populate(
-      {
-        path: "userId",
-        select: "username image"
-      }
-    )
-  
-    return res.json(commentPopulate);
+    const commentPopulate = await commentModel.findOne({ _id: comment._id })
+      .select("_id message parentId createdAt userId postId")
+      .populate(
+        {
+          path: "userId",
+          select: "username image"
+        }
+      )
+
+    return res.json({
+      commentPopulate,
+      likedByMe: false,
+      likeCount: 0
+    });
   } catch (error) {
     return res.status(500).json({ message: error.stack });
-  } 
+  }
 }
 
-async function updateComment (req, res)  {
+async function updateComment(req, res) {
   try {
-    if(req.body.message === "" || req.body.message == null){
+    if (req.body.message === "" || req.body.message == null) {
       return res.status(400).json({ message: "Message is required" })
-    } 
+    }
     const updatedComment = await commentModel.findByIdAndUpdate(
       req.params.commentId,
-      {message: req.body.message},
-      {new: true} // This option returns the updated document
+      { message: req.body.message },
+      { new: true } // This option returns the updated document
     );
-    const commentPopulate = await commentModel.findOne({_id: updatedComment._id})
-    .select("_id message parentId createdAt userId")
-    .populate(
-      {
-        path: "userId",
-        select: "_id name"
-      }
-    )
+    const commentPopulate = await commentModel.findOne({ _id: updatedComment._id })
+      .select("_id message parentId createdAt userId")
+      .populate(
+        {
+          path: "userId",
+          select: "_id name"
+        }
+      )
     return res.json(commentPopulate);
   } catch (error) {
     return res.status(400).json({ message: `Error from backend:- ${error.stack}` })
   }
 }
 
-async function deleteComment (req, res) {
+async function deleteComment(req, res) {
   try {
     const comment = await commentModel.findByIdAndDelete(req.params.commentId);
 
@@ -170,7 +192,7 @@ async function deleteComment (req, res) {
   }
 }
 
-async function deleteAll (req, res) {
+async function deleteAll(req, res) {
   try {
     await postModel.deleteMany();
     await commentModel.deleteMany();
@@ -180,7 +202,7 @@ async function deleteAll (req, res) {
   }
 }
 
-async function deleteSinglePost (req, res) {
+async function deleteSinglePost(req, res) {
   try {
     const post = await postModel.findByIdAndDelete(req.params.postId);
     if (!post) {

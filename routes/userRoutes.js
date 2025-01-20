@@ -5,7 +5,7 @@ const upload = require("../config/cloudinary");
 
 const router = express.Router();
 
-router.get("/users", getUsers);
+router.get("/users", isLoggedIn, getUsers);
 router.post("/sendRequest", isLoggedIn, sendRequest);
 router.post("/acceptRequest", isLoggedIn, acceptRequest);
 router.post("/rejectRequest", isLoggedIn, rejectRequest);
