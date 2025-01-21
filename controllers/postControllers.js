@@ -20,34 +20,53 @@ const COMMENT_SELECT_FIELDS = {
 async function getAllPosts(req, res) {
   try {
     let posts = await postModel.find()
-      .select("title body image createdAt")
+      .select("title body image comments createdAt")
       .populate("userId", "username image") // Populate user details
       .populate(
         COMMENT_SELECT_FIELDS  // Populate user details within comments
       )
       .sort({ createdAt: -1 });
 
-    const likesByMe = await likeModel.find({
-      userId: req.signData.userId,
-      commentId: { $in: posts.map(post => post.comments.map(comment => comment._id)).flat() }
-    })
+    const userId = req.signData.userId;
 
-    posts = await Promise.all(posts.map(async (post) => {
-      const comments = await Promise.all(post.comments.map(async (comment) => {
+    // Fetch all likes related to the current user's comments in all posts
+    const likesByMe = await likeModel.find({
+      userId: userId,
+      commentId: { $in: posts.flatMap(post => post.comments.map(comment => comment._id)) }
+    });
+
+    const allLikes = await likeModel.find();
+    // console.log(allLikes)
+
+    posts = posts.map(post => {
+      const tailoredComments = post.comments.map(comment => {
+        const isLikedByMe = likesByMe.some(like => like.commentId.toString() === comment._id.toString());
+        const likeCount = allLikes.filter(like => like.commentId.toString() === comment._id.toString()).length;
+        console.log(comment)
         return {
-          ...comment,
-          likedByMe: likesByMe.find(like => like.commentId == comment._id),
-          likeCount: await likeModel.countDocuments({ commentId: comment._id })
+          _id: comment._id,
+          message: comment.message,
+          parentId: comment.parentId,
+          createdAt: comment.createdAt,
+          userId: comment.userId,
+          postId: comment.postId,
+          comments: comment.comments,
+          likedByMe: isLikedByMe,
+          likeCount: likeCount
         };
-      }));
-      return { ...post, comments };
-    }));
+      });
+      return {
+        ...post.toObject(),
+        comments: tailoredComments
+      };
+    });
 
     return res.status(200).json(posts);
   } catch (error) {
-    res.status(500).json({ message: "FROM HERE " + error.stack });
+    return res.status(500).json({ message: "FROM HERE " + error.stack });
   }
 }
+
 
 async function createPost(req, res) {
   try {
@@ -138,7 +157,7 @@ async function createComment(req, res) {
       )
 
     return res.json({
-      commentPopulate,
+      ...commentPopulate.toObject(),
       likedByMe: false,
       likeCount: 0
     });
