@@ -1,7 +1,8 @@
 const postModel = require('../models/posts.js');
 const commentModel = require('../models/comments.js');
 const userModel = require('../models/users.js');
-const likeModel = require('../models/likes.js');
+const likeModel = require('../models/likes.js'); // For comments likes
+const likePostModel = require('../models/likesPost.js'); // For posts likes
 const mongoose = require("mongoose");
 const storage = require("../config/cloudinary.js")
 
@@ -29,15 +30,12 @@ async function getAllPosts(req, res) {
 
     const userId = req.signData.userId;
 
-    // Fetch all likes related to the current user's comments in all posts
+    // Fetch all likes related to the current user, on comments in all posts
     const likesByMe = await likeModel.find({
       userId: userId,
       commentId: { $in: posts.flatMap(post => post.comments.map(comment => comment._id)) }
     });
-
     const allLikes = await likeModel.find();
-    // console.log(allLikes)
-
     posts = posts.map(post => {
       const tailoredComments = post.comments.map(comment => {
         const isLikedByMe = likesByMe.some(like => like.commentId.toString() === comment._id.toString());
@@ -60,6 +58,22 @@ async function getAllPosts(req, res) {
         comments: tailoredComments
       };
     });
+
+    const likesByMePost = await likePostModel.find({
+      userId: userId,
+      postId: { $in: posts.map(post => post._id) }
+    });
+    const allLikesPost = await likePostModel.find();
+    posts = posts.map(post => {
+      const likedByMePost = likesByMePost.some(like => like.postId.toString() === post._id.toString());
+      const likeCountPost = allLikesPost.filter(like => like.postId.toString() === post._id.toString()).length;
+      return {
+        ...post,
+        likedByMePost: likedByMePost,
+        likeCountPost: likeCountPost
+      };
+    })
+
 
     return res.status(200).json(posts);
   } catch (error) {
@@ -91,7 +105,11 @@ async function createPost(req, res) {
     const populatedPost = await postModel.findById(post._id).populate('userId', 'username image');
     user.posts.push(post._id);
     await user.save();
-    return res.status(201).json(populatedPost);
+    return res.status(201).json({
+      ...populatedPost.toObject(),
+      likedByMePost: false,
+      likeCountPost: 0
+    });
   } catch (error) {
     return res.status(500).json({ message: error.stack });
   }
@@ -255,5 +273,25 @@ async function toggleCommentLike(req, res) {
   }
 }
 
+async function togglePostLike(req, res) {
+  try{
+    const data = { 
+      userId: req.signData.userId,
+      postId: req.params.postId 
+    }
+    const like = await likePostModel.findOne(data);
+    if(like==null){
+      await likePostModel.create(data)
+      return res.status(200).json(true);
+    }
+    else{
+      await likePostModel.deleteOne(data);
+      return res.status(200).json(false);
+    }
+  }
+  catch (error) {
+    return res.status(500).json({ message: error.stack });
+  }
+}
 
-module.exports = { getAllPosts, getSinglePost, createComment, updateComment, deleteComment, createPost, deleteAll, deleteSinglePost, toggleCommentLike };
+module.exports = { getAllPosts, getSinglePost, createComment, updateComment, deleteComment, createPost, deleteAll, deleteSinglePost, toggleCommentLike, togglePostLike };

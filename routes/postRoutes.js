@@ -1,7 +1,7 @@
 const express = require("express");
 const upload = require("../config/cloudinary");
 const { isLoggedIn } = require("../middlewares/authMiddlewares");
-const { getAllPosts, getSinglePost, createComment, updateComment, deleteComment, createPost, deleteAll, deleteSinglePost, toggleCommentLike } = require("../controllers/postControllers");
+const { getAllPosts, getSinglePost, createComment, updateComment, deleteComment, createPost, deleteAll, deleteSinglePost, toggleCommentLike, togglePostLike } = require("../controllers/postControllers");
 
 const router = express.Router();
 
@@ -14,5 +14,6 @@ router.delete("/:postId/comments/:commentId", isLoggedIn, deleteComment);
 router.delete("/:postId", isLoggedIn, deleteSinglePost);
 router.get("/deleteAll", deleteAll)
 router.post("/:postId/comments/:commentId/toggleLike", isLoggedIn, toggleCommentLike)
+router.post("/:postId/toggleLike", isLoggedIn, togglePostLike)
 
 module.exports = router;
