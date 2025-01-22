@@ -67,7 +67,6 @@ async function getAllPosts(req, res) {
   }
 }
 
-
 async function createPost(req, res) {
   try {
     if (req.body.title === "" || req.body.title == null) {
@@ -235,5 +234,26 @@ async function deleteSinglePost(req, res) {
   }
 }
 
+async function toggleCommentLike(req, res) {
+  try{
+    const data = { 
+      userId: req.signData.userId,
+      commentId: req.params.commentId 
+    }
+    const like = await likeModel.findOne(data);
+    if(like==null){
+      await likeModel.create(data)
+      return res.status(200).json(true);
+    }
+    else{
+      await likeModel.deleteOne(data);
+      return res.status(200).json(false);
+    }
+  }
+  catch (error) {
+    return res.status(500).json({ message: error.stack });
+  }
+}
 
-module.exports = { getAllPosts, getSinglePost, createComment, updateComment, deleteComment, createPost, deleteAll, deleteSinglePost };
+
+module.exports = { getAllPosts, getSinglePost, createComment, updateComment, deleteComment, createPost, deleteAll, deleteSinglePost, toggleCommentLike };
