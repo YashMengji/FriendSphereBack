@@ -40,7 +40,7 @@ async function login (req, res) {
     const {username, password} = req.body;
     const user = await userModel.findOne({username});
     if(user == null){
-      return res.status(400).json({ message: "User not registerd" });
+      return res.status(400).json({ message: "User not registered" });
     }
     bcrypt.compare(password, user.password, function(err, result) {
       if (err) {

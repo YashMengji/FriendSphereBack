@@ -40,7 +40,7 @@ async function getAllPosts(req, res) {
       const tailoredComments = post.comments.map(comment => {
         const isLikedByMe = likesByMe.some(like => like.commentId.toString() === comment._id.toString());
         const likeCount = allLikes.filter(like => like.commentId.toString() === comment._id.toString()).length;
-        console.log(comment)
+        // console.log(comment)
         return {
           _id: comment._id,
           message: comment.message,
