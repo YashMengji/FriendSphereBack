@@ -20,7 +20,7 @@ app.use(cookieParser());
   
 app.get("/", (req, res) => {
   // res.send("Hello World");
-  res.redirect("https://friendspherefront.onrender.com/")
+  return res.redirect("https://friendspherefront.onrender.com/")
 })
 
 app.use("/api/auth", authRoutes);
